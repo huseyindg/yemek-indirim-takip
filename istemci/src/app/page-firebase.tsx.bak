@@ -1,0 +1,198 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Indirim, Bolge } from '@/types';
+import IndirimKarti from '@/components/IndirimKarti';
+import BolgeSecici from '@/components/BolgeSecici';
+import { Loader2, Flame } from 'lucide-react';
+import Link from 'next/link';
+
+export default function AnaSayfa() {
+  const [secilenBolge, setSecilenBolge] = useState<Bolge>({
+    id: '1',
+    sehir: 'istanbul',
+    semt: 'kadikoy',
+  });
+
+  const [indirimler, setIndirimler] = useState<Indirim[]>([]);
+  const [yukleniyor, setYukleniyor] = useState(true);
+  const [hata, setHata] = useState<string | null>(null);
+
+  // Firebase'den indirimleri çek
+  useEffect(() => {
+    const indirimleriGetir = async () => {
+      setYukleniyor(true);
+      setHata(null);
+
+      try {
+        // Firestore sorgusu
+        const q = query(
+          collection(db, 'urunler'),
+          where('bolge', '==', secilenBolge.semt),
+          where('sehir', '==', secilenBolge.sehir),
+          orderBy('bulunmaTarihi', 'desc'),
+          limit(20)
+        );
+
+        const snapshot = await getDocs(q);
+        const veriler: Indirim[] = [];
+
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          veriler.push({
+            id: doc.id,
+            ...data,
+            bulunmaTarihi: data.bulunmaTarihi?.toDate() || new Date(),
+          } as Indirim);
+        });
+
+        setIndirimler(veriler);
+      } catch (err: any) {
+        console.error('İndirimler yüklenirken hata:', err);
+
+        // Firebase yapılandırılmamışsa demo verileri göster
+        if (err.code === 'failed-precondition' || err.message?.includes('Firebase')) {
+          setHata('Firebase yapılandırılmamış. Demo verileri gösteriliyor...');
+          setIndirimler(demoIndirimler);
+        } else {
+          setHata('İndirimler yüklenirken bir hata oluştu.');
+        }
+      } finally {
+        setYukleniyor(false);
+      }
+    };
+
+    indirimleriGetir();
+  }, [secilenBolge]);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-30">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+              <Flame className="w-6 h-6 text-red-500 mr-2" />
+              Yemek İndirim Avcısı
+            </h1>
+            <Link
+              href="/kodlar"
+              className="text-sm font-medium text-red-500 hover:text-red-600"
+            >
+              İndirim Kodları →
+            </Link>
+          </div>
+
+          {/* Bölge seçici */}
+          <BolgeSecici
+            secilenBolge={secilenBolge}
+            onBolgeSecildi={setSecilenBolge}
+          />
+        </div>
+      </header>
+
+      {/* İçerik */}
+      <main className="max-w-4xl mx-auto px-4 py-6">
+        {/* Başlık */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-2 flex items-center">
+            <Flame className="w-5 h-5 text-red-500 mr-2" />
+            Bugün Aktif İndirimler
+          </h2>
+          <p className="text-sm text-gray-600">
+            {secilenBolge.semt}, {secilenBolge.sehir} bölgesindeki güncel indirimler
+          </p>
+        </div>
+
+        {/* Yükleniyor */}
+        {yukleniyor && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 text-red-500 animate-spin" />
+          </div>
+        )}
+
+        {/* Hata */}
+        {hata && !yukleniyor && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <p className="text-yellow-800 text-sm">{hata}</p>
+          </div>
+        )}
+
+        {/* İndirimler listesi */}
+        {!yukleniyor && indirimler.length > 0 && (
+          <div className="space-y-4">
+            {indirimler.map((indirim) => (
+              <IndirimKarti key={indirim.id} indirim={indirim} />
+            ))}
+          </div>
+        )}
+
+        {/* Boş durum */}
+        {!yukleniyor && !hata && indirimler.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-gray-500">
+              Bu bölgede henüz aktif indirim bulunamadı.
+            </p>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+// Demo verileri (Firebase yoksa gösterilecek)
+const demoIndirimler: Indirim[] = [
+  {
+    id: 'demo-1',
+    platform: 'yemeksepeti',
+    restoran: 'Domino\'s Pizza',
+    restoranId: 'dominos-1',
+    urunAdi: 'Büyük Boy Karışık Pizza',
+    gorsel: 'https://via.placeholder.com/400x300?text=Dominos+Pizza',
+    eskiFiyat: 89,
+    yeniFiyat: 53,
+    indirimOrani: 40,
+    bolge: 'kadikoy',
+    sehir: 'istanbul',
+    kampanyaBaslik: '%40 İndirim - Büyük Boy Pizza',
+    url: 'https://www.yemeksepeti.com',
+    bulunmaTarihi: new Date(),
+    sahteIndirim: false,
+  },
+  {
+    id: 'demo-2',
+    platform: 'getir',
+    restoran: 'Burger King',
+    restoranId: 'bk-1',
+    gorsel: 'https://via.placeholder.com/400x300?text=Burger+King',
+    eskiFiyat: 120,
+    yeniFiyat: 60,
+    indirimOrani: 50,
+    bolge: 'kadikoy',
+    sehir: 'istanbul',
+    kampanyaBaslik: '%50 İndirim!',
+    url: 'https://getir.com/yemek',
+    bulunmaTarihi: new Date(Date.now() - 3600000), // 1 saat önce
+    sahteIndirim: true,
+    ortalama30Gunluk: 65,
+  },
+  {
+    id: 'demo-3',
+    platform: 'trendyol',
+    restoran: 'Sbarro',
+    restoranId: 'sbarro-1',
+    urunAdi: 'İtalyan Pizza Slice',
+    gorsel: 'https://via.placeholder.com/400x300?text=Sbarro',
+    eskiFiyat: 45,
+    yeniFiyat: 29,
+    indirimOrani: 35,
+    bolge: 'kadikoy',
+    sehir: 'istanbul',
+    kampanyaBaslik: '%35 İndirim - Pizza Slice',
+    url: 'https://www.trendyolyemek.com',
+    bulunmaTarihi: new Date(Date.now() - 7200000), // 2 saat önce
+    sahteIndirim: false,
+  },
+];
