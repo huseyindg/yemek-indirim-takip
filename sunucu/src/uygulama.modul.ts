@@ -7,6 +7,7 @@ import { PlatformModulu } from './modeller/platform/platform.modul';
 import { UrunModulu } from './modeller/urun/urun.modul';
 import { FiyatModulu } from './modeller/fiyat/fiyat.modul';
 import { IndirimModulu } from './modeller/indirim/indirim.modul';
+import { ScraperModulu } from './servisler/scraper.modul';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { IndirimModulu } from './modeller/indirim/indirim.modul';
     UrunModulu,
     FiyatModulu,
     IndirimModulu,
+    ScraperModulu,
   ],
   controllers: [],
   providers: [],
