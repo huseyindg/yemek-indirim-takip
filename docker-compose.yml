@@ -55,7 +55,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     ports:
-      - "3001:3001"
+      - "3101:3001"
     depends_on:
       veritabani:
         condition: service_healthy
@@ -73,9 +73,9 @@ services:
     container_name: yemek-istemci
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://104.248.30.214:3001
+      NEXT_PUBLIC_API_URL: http://104.248.30.214:3101
     ports:
-      - "3000:3000"
+      - "3100:3000"
     depends_on:
       - sunucu
     networks:
