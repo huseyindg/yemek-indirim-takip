@@ -11,7 +11,7 @@ import { BrowserServisi } from './scraping/browser.servis';
 import { RateLimiterServisi } from './scraping/rate-limiter.servis';
 import { ProxyServisi } from './scraping/proxy.servis';
 
-interface ScraperSonucu {
+export interface ScraperSonucu {
   platform: string;
   indirimSayisi: number;
   hata?: string;
@@ -136,13 +136,19 @@ export class ScraperServisi {
         if (mevcut) {
           // Güncelle
           mevcut.baslik = kod.baslik;
-          mevcut.aciklama = kod.aciklama;
-          mevcut.indirimTuru = kod.indirimTuru;
-          mevcut.indirimMiktari = kod.indirimMiktari;
-          mevcut.minimumSiparis = kod.minimumSiparis;
-          mevcut.maksimumIndirim = kod.maksimumIndirim;
-          mevcut.yeniKullaniciIcin = kod.yeniKullaniciIcin;
-          mevcut.aktif = kod.aktif;
+          mevcut.aciklama = kod.aciklama || '';
+          mevcut.tur = kod.indirimTuru === 'yuzde' ? 'kod' : 'kampanya';
+          if (kod.indirimTuru === 'yuzde') {
+            mevcut.indirimOrani = kod.indirimMiktari;
+            mevcut.indirimMiktari = null;
+          } else {
+            mevcut.indirimOrani = null;
+            mevcut.indirimMiktari = kod.indirimMiktari;
+          }
+          mevcut.minimumSiparisTutari = kod.minimumSiparis || null;
+          mevcut.maksimumIndirim = kod.maksimumIndirim || null;
+          mevcut.yeniKullaniciIcin = kod.yeniKullaniciIcin || false;
+          mevcut.aktif = kod.aktif !== false;
           if (kod.bitisTarihi) {
             mevcut.bitisTarihi = new Date(kod.bitisTarihi);
           }
@@ -153,15 +159,16 @@ export class ScraperServisi {
             platformId,
             kod: kod.kod,
             baslik: kod.baslik,
-            aciklama: kod.aciklama,
-            indirimTuru: kod.indirimTuru,
-            indirimMiktari: kod.indirimMiktari,
-            minimumSiparis: kod.minimumSiparis,
-            maksimumIndirim: kod.maksimumIndirim,
-            yeniKullaniciIcin: kod.yeniKullaniciIcin,
+            aciklama: kod.aciklama || '',
+            tur: kod.indirimTuru === 'yuzde' ? 'kod' : 'kampanya',
+            indirimOrani: kod.indirimTuru === 'yuzde' ? kod.indirimMiktari : null,
+            indirimMiktari: kod.indirimTuru === 'sabit' ? kod.indirimMiktari : null,
+            minimumSiparisTutari: kod.minimumSiparis || null,
+            maksimumIndirim: kod.maksimumIndirim || null,
+            yeniKullaniciIcin: kod.yeniKullaniciIcin || false,
             baslangicTarihi: kod.baslangicTarihi ? new Date(kod.baslangicTarihi) : null,
             bitisTarihi: kod.bitisTarihi ? new Date(kod.bitisTarihi) : null,
-            aktif: kod.aktif,
+            aktif: kod.aktif !== false,
             kullanimSayisi: 0,
             olumluOy: 0,
             olumsuzOy: 0,
