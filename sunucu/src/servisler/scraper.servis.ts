@@ -20,24 +20,22 @@ export interface ScraperSonucu {
 @Injectable()
 export class ScraperServisi {
   private readonly logger = new Logger(ScraperServisi.name);
-  private readonly browserServisi: BrowserServisi;
-  private readonly rateLimiterServisi: RateLimiterServisi;
-  private readonly proxyServisi: ProxyServisi;
 
   constructor(
     @InjectRepository(IndirimEntite)
     private indirimRepository: Repository<IndirimEntite>,
     @InjectRepository(PlatformEntite)
     private platformRepository: Repository<PlatformEntite>,
-  ) {
-    this.proxyServisi = new ProxyServisi();
-    this.rateLimiterServisi = new RateLimiterServisi();
-    this.browserServisi = new BrowserServisi(this.proxyServisi);
-  }
+  ) {}
 
   async tumPlatformlariTara(bolge: string = 'kadikoy', sehir: string = 'istanbul'): Promise<ScraperSonucu[]> {
-    this.logger.log(`🎯 Scraping başlatılıyor: ${sehir}/${bolge}`);
+    this.logger.log(`Scraping baslatiliyor: ${sehir}/${bolge}`);
     const sonuclar: ScraperSonucu[] = [];
+
+    // Initialize scraping services only when needed
+    const proxyServisi = new ProxyServisi();
+    const rateLimiterServisi = new RateLimiterServisi();
+    const browserServisi = new BrowserServisi(proxyServisi);
 
     // Platformları yükle
     const platformlar = await this.platformRepository.find();
@@ -45,27 +43,27 @@ export class ScraperServisi {
 
     // Scraper'ları oluştur
     const yemeksepetiScraper = new YemeksepetiIndirimScraper(
-      this.browserServisi,
-      this.rateLimiterServisi,
-      this.proxyServisi,
+      browserServisi,
+      rateLimiterServisi,
+      proxyServisi,
     );
 
     const getirScraper = new GetirIndirimScraper(
-      this.browserServisi,
-      this.rateLimiterServisi,
-      this.proxyServisi,
+      browserServisi,
+      rateLimiterServisi,
+      proxyServisi,
     );
 
     const trendyolScraper = new TrendyolIndirimScraper(
-      this.browserServisi,
-      this.rateLimiterServisi,
-      this.proxyServisi,
+      browserServisi,
+      rateLimiterServisi,
+      proxyServisi,
     );
 
     const migrosScraper = new MigrosIndirimScraper(
-      this.browserServisi,
-      this.rateLimiterServisi,
-      this.proxyServisi,
+      browserServisi,
+      rateLimiterServisi,
+      proxyServisi,
     );
 
     // Yemeksepeti
@@ -117,9 +115,9 @@ export class ScraperServisi {
     }
 
     // Cleanup
-    await this.browserServisi.tumTarayicilariKapat();
+    await browserServisi.tumTarayicilariKapat();
 
-    this.logger.log('✅ Scraping tamamlandı');
+    this.logger.log('Scraping tamamlandi');
     return sonuclar;
   }
 
