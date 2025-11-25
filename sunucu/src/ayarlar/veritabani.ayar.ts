@@ -10,7 +10,7 @@ export const veritabaniAyarlari: TypeOrmModuleOptions = {
   database: process.env.VERITABANI_ADI || 'yemek_fiyat_takip',
   entities: [__dirname + '/../**/*.entite{.ts,.js}'],
   migrations: [__dirname + '/../veritabani/migrations/*{.ts,.js}'],
-  synchronize: process.env.NODE_ENV === 'development',
+  synchronize: true, // Temporarily enabled for initial setup
   logging: process.env.NODE_ENV === 'development',
 };
 
