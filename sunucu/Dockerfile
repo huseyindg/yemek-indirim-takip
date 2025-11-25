@@ -1,5 +1,5 @@
 # Multi-stage build for production optimization
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Install dependencies for Puppeteer
 RUN apk add --no-cache \
@@ -29,7 +29,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Install runtime dependencies for Puppeteer
 RUN apk add --no-cache \
