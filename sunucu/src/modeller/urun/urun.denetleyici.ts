@@ -26,7 +26,7 @@ export class UrunDenetleyici {
   }
 
   @Get(':id')
-  async urunGetir(@Param('id') id: string): Promise<UrunEntite[]> {
+  async urunGetir(@Param('id') id: string): Promise<UrunEntite> {
     return this.urunServisi.urunGetir(id);
   }
 
